@@ -674,7 +674,7 @@ You can also make publication-quality visualizations using ggplot2:
 ggplot(mpg, aes(displ, hwy)) +
   geom_point(aes(color = class)) +
   geom_smooth(se = FALSE) +
-  labs(x="Engine displacement (L)",y="Heighway fuel economy (mpg)",
+  labs(x="Engine displacement (L)",y="Highway fuel economy (mpg)",
     title = "Fuel efficiency generally decreases with engine size",
     caption = "Data from fueleconomy.gov",
     subtitle = "Two seaters (sports cars) are an exception because of their light weight",
@@ -1328,7 +1328,7 @@ grid.arrange(base,p1,p2,p3,p4,p5,p6,p7,nrow=3)
 p1 <- ggplot(mpg, aes(displ, hwy)) +
   geom_point(aes(color = class)) +
   geom_smooth(se = FALSE) +
-  labs(x="Engine displacement (L)",y="Heighway fuel economy (mpg)",
+  labs(x="Engine displacement (L)",y="Highway fuel economy (mpg)",
     title = "Fuel efficiency generally decreases with engine size",
     caption = "Data from fueleconomy.gov",
     subtitle = "Two seaters (sports cars) are an exception because of their light weight",
@@ -1417,4 +1417,3 @@ Now that we've gone through tidying, transforming, and visualizing data let's re
 ```{r}
 sessionInfo()
 ```
-

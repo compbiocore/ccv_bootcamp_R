@@ -925,35 +925,3 @@ Use the `sessionInfo()` function to see more information about your loaded R pac
 ```{r}
 print(sessionInfo())
 ```
-
-```{r}
-#install.packages('ggplot2')
-```
-
-Before you can actually use the package, you have to load it as follows:
-
-```{r}
-library('ggplot2')
-```
-
-### Most R packages are found in CRAN - the central repository for R packages. However, packages can be found in different places. Many of the packages of interest for biologists will be in Bioconductor. 
-
-There are two steps to downloading a package from Bioconductor -- first, install BiocManager.
-
-```{r}
-install.packages("BiocManager")
-```
-
-Then, load `BiocManager` and use `BiocManager::install()` to install a package.
-
-```{r}
-library('BiocManager')
-BiocManager::install("org.Hs.eg.db")
-```
-
-Use the `sessionInfo()` function to see more information about your loaded R packages and namespace:
-
-```{r}
-print(sessionInfo())
-```
-
