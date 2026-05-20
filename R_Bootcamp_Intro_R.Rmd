@@ -1,0 +1,927 @@
+---
+title: "R Bootcamp: Intro to R"
+output: html_document
+---
+
+# Welcome to the Introduction to R Workshop 
+
+This workshop is intended to serve as an introduction to the R programming language for those with little to no experience in its use. 
+
+## In this workshop you will learn:
+- Basics of R (objects, variables, data classes, vectors)
+- How to write and use R functions 
+- How to import and export your own files 
+- How to install and load R and Bioconductor packages
+
+### This workshop uses JupyterHub, which provides an environment to run Jupyter notebooks for Python, Julia, R, and other languages without the need to install any software or packages. Two helpful shortcuts:
+- Shift + Enter to run a cell and move to the next cell
+- Press 'b' to create a cell below (won't work if your cursor is showing up inside the cell itself).
+- See other shortcuts here https://towardsdatascience.com/jypyter-notebook-shortcuts-bf0101a98330.
+
+### If you want to continue using R outside of a Jupyter notebook, you'll need to install R - https://www.r-project.org/ and optionally Rstudio - https://rstudio.com/.
+
+# What is R?
+- R is a language and environment for statistical computing and graphics (https://www.r-project.org/about.html). 
+- It is free and can be tailored to your needs by installing and using specific packages (https://cran.r-project.org/web/packages/available_packages_by_name.html).
+- You can use R interactively (e.g., enter commands into the R console or R Studio https://rstudio.com/) or into new cells in your Jupyter notebook.
+- You can write and run R scripts or generate reports and documents using R notebooks (https://blog.rstudio.com/2016/10/05/r-notebooks/) and markdown files (https://rmarkdown.rstudio.com/).
+
+# Basics - Interacting with R
+- You can use R interactively and have it do some simple math:
+
+```{r}
+2-1
+```
+
+- It is generally more useful to assign your values to **variables**, which are R objects.
+- You can assign values to R variables using the assignment operator **'<-'**, which assigns the value on the right to the variable on the left.
+- There are other operators as well (like the `=` sign) but I would suggest you stick with the `<-` operator for now.
+- Everything in R (including variables) is an object (https://cran.r-project.org/doc/manuals/r-release/R-lang.html#Objects)
+
+<div class="alert alert-block alert-info">
+<b>Tip:</b> We will use the words `object` and `variable` interchangably in this workshop.
+</div>
+
+Let's assign a variable called `a`:
+
+```{r}
+a <- 1
+```
+
+R won't print anything when you assign a value to a variable. We can look at the output of our assignment by typing `a`.
+
+```{r}
+a
+```
+
+- R also comes with a `print()` function that we can use to look at our variables.
+- We will talk more about functions later in this workshop, but a **function** is a series of statements that work together to perform a specific task.
+- All functions need pieces of information (or **arguments**) to perform their particular function, these arguments can be required or optional. 
+- `print()` takes a single required argument -- the thing you want to print.
+
+<div class="alert alert-block alert-info">
+<b>Tip:</b> You can use `?function` in R to learn more about a particular function (for example: `?print`).
+</div>
+
+- Let's print variable `a`:
+
+```{r}
+print(a)
+```
+
+**We can name our variables any combination of letters, numbers, or underscores (`_`) with a few exceptions:**
+- R has a few reserved words that ***cannot*** be used as variable names in R:
+    - `if`, `else`, `repeat`, `while`, `function`, `for`, `in`
+    - see the whole list of reserved words here: https://stat.ethz.ch/R-manual/R-devel/library/base/html/Reserved.html). 
+- Variables ***cannot*** start with a number or an underscore
+- You can technically use `.` in your variable names, but this is best avoided for now.
+
+Here are some examples of appropriate variable names:
+
+```{r}
+bar <- 11
+cat_1 <- 'cat' 
+dog_ <- TRUE
+egg <- (1L)
+foo <- 2i
+```
+
+Now that we have assigned some values to variables, we can start using them:
+
+```{r}
+print(bar)
+```
+
+```{r}
+print(bar * 2)
+```
+
+```{r}
+print(a)
+```
+
+```{r}
+print(a + bar)
+```
+
+# Data classes
+
+- The variables you assign have some sort of data class associated with them.
+- Data classes impact how functions will interact with your variables.
+- R has 5 basic data classes, including:
+
+1. `character`, which is a character 
+2. `numeric`, which can be `real` (a rounded number) or `decimal` (a number including a decimal point).
+3. `integer`, which can be a rounded number (but not a decimal) 
+4. `logical`, which can be either `TRUE` or `FALSE`
+5. `complex`, allows you to use imaginary numbers 
+
+- You can also have missing data, which we will also talk about later in this workshop.
+- The difference between an integer and real numeric is subtle and probably isn't worth worrying about at this point.
+
+Let's look at the data classes of our variables we have just assigned:
+
+```{r}
+class(a)
+class(bar)
+class(cat_1)
+class(dog_)
+class(egg)
+class(foo)
+```
+
+- The `L` we included when we assigned `egg` tells R that this object is an integer.
+- The `i` we included when we assigned `foo` indicates an imaginary number, making `foo` complex data class object.
+
+```{r}
+#?class
+```
+
+- The `#` before `?class` in the above cell means that this piece of code is actually a comment and won't be run.
+- You can remove the `#` to run the cell and learn more about `class()`.
+- The `#` comment characters are helpful -- you can use them to explain your code to future you (or other users of your code).
+
+# R data structures
+- R objects can also contain more than one element.
+- Objects that contain more than one element are organized into different data structures.
+- Data structures in R include vectors (also referred to as 'atomic vectors' in R), lists, matrices, arrays, and data frames.
+
+### Vectors
+- Probably the simplest R object that contains more than one element is a **vector**. 
+- You can create a vector using the concatenate function, `c()`, or directly assigning them. 
+- The `c()` function will coerce all of the arguments to a common data type and combine them to form a vector. 
+- Here's a few examples of how you can assign vectors:
+
+```{r}
+numeric_vector <- c(12,11,10,9,8) 
+character_vector <- c('one', 'two', 'three', 'four', 'five') 
+integer_vector <- (7:1) 
+logical_vector <- c(TRUE, TRUE, FALSE)
+character_vector_2 <- c('a', 'pug', 'is', 'not', 'a', 'big', 'dog')
+```
+
+Note that I used `:` when assigning `integer_vector`, which just generates a list from 6 through 12.
+
+```{r}
+print(numeric_vector)
+print(character_vector)
+print(integer_vector)
+print(logical_vector) 
+print(character_vector_2)
+```
+
+Vectors also have class:
+
+```{r}
+print(class(numeric_vector))
+print(class(character_vector))
+print(class(integer_vector))
+print(class(logical_vector)) 
+print(class(character_vector_2))
+```
+
+You can combine vectors using `c()`
+
+```{r}
+combined_vector <- c(numeric_vector, integer_vector)
+```
+
+```{r}
+print(combined_vector)
+```
+
+You can use the `length()` function to see how long your vectors are:
+
+```{r}
+print(length(combined_vector))
+```
+
+You can also access elements of the vector based on the index (or its position in the vector):
+
+```{r}
+print(combined_vector[2])
+```
+
+You can combine these operations, but note that R code evaluates from the inside out:
+
+```{r}
+print(combined_vector[length(combined_vector)])
+```
+
+Here, R is reading `length(combined_vector)` first. The value returned by the `length()` function is then used to access the last entry in the `combined_vector` vector.
+
+You can also name vector elements and then access them by their names:
+
+```{r}
+names(numeric_vector) <- c('one', 'two', 'three', 'four', 'five')
+print(numeric_vector)
+```
+
+```{r}
+print(numeric_vector['three'])
+```
+
+We can use `-c` to remove vector elements:
+
+```{r}
+print( combined_vector[-c(4)]   )
+```
+
+If a vector is numerical, we can also perform some math operations on the entire vector. Here, we can calculate the sum of a vector:
+
+```{r}
+print(combined_vector)
+print(sum(combined_vector))
+```
+
+```{r}
+print(combined_vector/sum(combined_vector))
+```
+
+Use the `round()` function to specify you only want 3 digits reported and assign it to a variable called `rounded`
+
+```{r}
+rounded <- round((combined_vector/sum(combined_vector)), digits = 3)
+print(rounded)
+```
+
+You can also perform math operations on two vectors...
+
+```{r}
+print(rounded + combined_vector)
+```
+
+but you'll get weird results if the vectors are different lengths:
+
+```{r}
+print(combined_vector)
+print(numeric_vector)
+```
+
+```{r}
+print(combined_vector + numeric_vector)
+```
+
+It looks like R will give you an error message and then go back to the start of the shorter vector.
+
+**Coercing between classes**
+
+Let's say you're trying to import some data into R, maybe a vector of measurements:
+
+```{r}
+your_data <- c('6','5','3','2','11','0','9','9')
+class(your_data)
+```
+
+Your vector is a character vector because the elements of the vector are in quotes. You can coerce them back into numeric values using `as.numeric()`:
+
+```{r}
+your_new_data <- as.numeric(your_data)
+print(your_new_data)
+class(your_new_data)
+```
+
+What happens if we try to `as.numeric` things that aren't numbers?
+
+```{r}
+as.numeric(character_vector_2)
+```
+
+<div class="alert alert-block alert-warning">
+<b>Example:</b> <b>NA</b> indicates that these are missing values, so be careful when converting between classes.
+</div>
+
+# Missing values
+Missing values can result from things like inappropriate coersion, Excel turning everything into a date, encoding format problems, etc.
+
+```{r}
+here_is_a_vector <- as.numeric(c(4/61, 35/52, '19-May', 3/40))
+```
+
+We can use the `is.na()` function to see if our vector has any `<NA>` values in it:
+
+```{r}
+is.na(here_is_a_vector)
+```
+
+You can combine this with the `table()` function to see some tabulated results from `is.na()`:
+
+```{r}
+table( is.na( here_is_a_vector ) )
+```
+
+You might also encounter an `NaN`, which means 'not a number' and is the result of invalid math operations:
+
+```{r}
+0/0
+```
+
+`NULL` is another one you might encounter, and it is the result of trying to query a parameter that is undefined for a specific object. For example, you can use the `names()` function to retrieve names assigned to an object. What happens when you try to use this function on an object you haven't named?
+
+```{r}
+names(here_is_a_vector)
+```
+
+You might also see `Inf` or `-Inf` which are positive or negative infinity, which result from dividing by zero or operations that do not converge:
+
+```{r}
+1/0
+```
+
+# Matrices
+- A matrix in R is a collection of elements organized into rows and columns.
+- All columns must be the same data type and be the same length.
+- Generate a matrix using the following general format:
+
+```
+my_matrix <- matrix(
+    vector, 
+    nrow = r, 
+    ncol = c, 
+    byrow = FALSE)
+```
+
+For example:
+
+```{r}
+my_matrix <- matrix(
+    c(1:12), 
+    nrow = 3, 
+    ncol = 4, 
+    byrow = FALSE)
+
+print(my_matrix)
+```
+
+In the above code, we made `my_matrix`, we specified it should be populated by the vector `c(1:12)`, with 3 rows (`nrow = 3`) and 4 columns (`ncol = 4`) and be populated by column, not by row (`byrow = FALSE`)
+
+We can access the rows and columns by their numerical index using a `[row, column]` format.
+For example, here's how we access row 3 and column 4:
+
+```{r}
+my_matrix[3,4]
+```
+
+Access entire row 3:
+
+```{r}
+print(my_matrix[3,])
+```
+
+Access entire column 4:
+
+```{r}
+print(my_matrix[,4])
+```
+
+You can also name the rows and columns and then access them by name. 
+For example, lets name the rows and columns of `my_matrix`
+
+```{r}
+dimnames(my_matrix) <- list(
+    c('row_A', 'row_B', 'row_C'), 
+    c('column_1', 'column_2', 'column_3', 'column_4'))
+```
+
+You can also name the rows and columns separately using `rownames()` and `colnames()`
+
+```{r}
+rownames(my_matrix) <- c('row_1', 'row_2', 'row_3')
+colnames(my_matrix) <- c('column_1', 'column_2', 'column_3', 'column_4')
+```
+
+```{r}
+print(my_matrix)
+```
+
+```{r}
+print(my_matrix['row_2',])
+```
+
+```{r}
+print(my_matrix[,'column_2'])
+```
+
+We can use `%in%` to filter matrix rows, like this -- we are filtering `my_matrix` to get rows where `rownames(my_matrix)` are in the vector `c('row_2', 'row_3)`. Note the position of the comma, which indicates we want rows back.
+
+```{r}
+my_matrix[rownames(my_matrix) %in% c('row_2', 'row_3'),]
+```
+
+# Lists
+
+- Lists in R are very flexible, they are collections of elements that can be different classes, structures, whatever. You can even have lists of lists.
+- You make lists using the `list()` function (or by coersion using `as.list()`.
+
+```{r}
+my_list <- list(character_vector, my_matrix)
+print(my_list)
+```
+
+Use `[[]]` to access list elements:
+
+```{r}
+print(my_list[[2]])
+```
+
+Add more brackets to access sub-elements of a list:
+
+```{r}
+print(my_list[[2]][1])
+```
+
+```{r}
+print(my_list[[2]][1,])
+```
+
+Name the list elements:
+
+```{r}
+names(my_list) <- c('character_vector', 'my_matrix')
+print(my_list)
+```
+
+Use `unlist()` if you want to convert a list to a vector, let's make a new list (`list_1`)
+
+```{r}
+list_1 <- list(1:5)
+print(list_1)
+```
+
+Use `str()` to look at the structure
+
+```{r}
+str(list_1)
+```
+
+Then `unlist()` and look at the structure
+
+```{r}
+print(unlist(list_1))
+str(unlist(list_1))
+```
+
+# Data Frames 
+
+- A data frame is another way to organize a collection of rows and columns.
+- It is a collection of lists organized into columns.
+- It is similar to a matrix, except data frames allow different data types in different columns.
+- We can use the `data.frame()` function to create a data frame from vectors using the following format:
+
+```
+dataframe <- data.frame(column_1, column_2, column_3)
+```
+
+```{r}
+example_df <- data.frame(
+    c('a','b','c'), 
+    c(1, 3, 5), 
+    c(TRUE, TRUE, FALSE))
+
+print(example_df)
+```
+
+Use `names()` or `colnames()` to name columns,  `rownames()` to name rows, or `dimnames()` to assign both column and row names to the data frame:
+
+```{r}
+colnames(example_df) <- c('letters', 'numbers', 'boolean')
+rownames(example_df) <- c('first', 'second', '')
+print(example_df)
+```
+
+```{r}
+names(example_df) <- c('_letters_', '_numbers_', '_boolean_')
+print(example_df)
+```
+
+```{r}
+dimnames(example_df) <- list(c('__first', '__second', '__third'), c('__letters', '__numbers', '__boolean'))
+print(example_df)
+```
+
+We can use the `attributes()` and `str()` functions to get some information about our data frame:
+
+```{r}
+attributes(example_df)
+```
+
+```{r}
+str(example_df)
+```
+
+The remainder of our discussion surrounding data frames can be found in the Intro to Tidyverse portion of this R bootcamp, which is a separate notebook and covers data mangement in R in much more detail.
+
+# Factors
+- In some situations, you might be dealing with categorical variable, which is known as a factor variable in R. 
+- A factor is a type of variable that has a set number of distinct categories into which all observations fall, which are the levels.
+
+*Factor variables are important because R's default behavior when reading in text files is to convert that text into a factor variable rather than a character variable, which can often lead to weird behavior if the user is trying to e.g. search that text.* (although as of R 4.0.0 this is no longer true!)
+- So first we will create a data frame object containing a factor variable, then we'll add a row to the data frame
+- In addition to `cbind()` for adding columns, there is another function in R called `rbind()`, which adds new rows to a data frame.
+- Let's see what happens when we create a data frame and then try to add a new row to our data frame:
+
+```{r}
+patients_1 <- data.frame(
+    as.factor(c('Boo','Rex','Chuckles')), 
+    c(1, 3, 5), 
+    c('dog', 'dog', 'dog'))
+names(patients_1) <- c('name', 'number_of_visits', 'type')
+print(patients_1)
+patients_1_rbind <- rbind(patients_1, c('Fluffy', 2, 'dog'))
+print(patients_1_rbind)
+```
+
+- The `patients_1$name` column is classed as a `factor`, and the factors levels are `Boo`, `Chuckles`, and `Rex`. 
+- Recall that a factor is a type of variable that has a **set number of distinct categories into which all observations fall, which are the levels.**
+- R isn't sure what to do with the new level we are trying to add (`Fluffy`), so we have to turn those factors into strings.
+
+We can convert the `patients_1$name` column to a character as follows:
+
+```{r}
+patients_1$name <- as.character(patients_1$name)
+str(patients_1)
+```
+
+Now we can use `rbind()` to add a new row:
+
+```{r}
+patients_1 <- rbind(patients_1, c('Fluffy', 2, 'dog'))
+print(patients_1)
+```
+
+# Re-ordering factor levels
+- You might have ordinal data, like the following:
+
+```{r}
+sizes <- factor(c('extra small', 'small', 'large', 'extra large', 'large', 'small', 'medium', 'medium', 'medium', 'medium', 'medium'))
+```
+
+Use the `table()` function to look at the vector:
+
+```{r}
+table(sizes)
+```
+
+We might not necessarily want the factor levels in alphabetical order. You can re-order them like so:
+
+```{r}
+sizes_sorted <- factor(sizes, levels = c('extra small', 'small', 'medium', 'large', 'extra large'))
+table(sizes_sorted)
+```
+
+You can also use the `relevel()` function to specify that there's a single factor you'd like to use as the reference factor, which will now be the first factor:
+
+```{r}
+sizes_releveled <- relevel(sizes, 'medium')
+table(sizes_releveled)
+```
+
+You can also coerce a factor to a character:
+
+```{r}
+character_vector <- as.character(sizes)
+class(character_vector)
+print(character_vector)
+```
+
+Notice that print doesn't return the `Levels` and each element of the vector is now in quotes.
+It is also possible to convert a factor into a numeric vector if you want to:
+
+```{r}
+print(sizes)
+numeric_vector <- as.numeric(sizes)
+print(numeric_vector)
+```
+
+This assigns numerical values based on alphabetical order of `sizes`
+
+**Warning:** If you have a factor variable where the levels are numbers, as.numeric() is not appropriate! Please see `?factor` for more information about this problem (under "Warning" section).
+
+# Built-in functions
+- We have already used a few functions in this workshop (like print). 
+- Functions are a series of statements that work together to form a specific task.
+- All functions need pieces of information (or arguments) to perform their particular function. 
+- Sometimes arguments are required, sometimes arguments are optional -- for example, `print()` requires only one argument -- the thing you want to print.
+- R comes with some pre-loaded data sets -- you see the list by typing `print(data())`, but it is quite long.
+
+Load the `DNase` data and turn it into a data frame:
+
+```{r}
+data(DNase)
+DNase <- data.frame(DNase)
+```
+
+Let's use the `dim()`, `nrow()`, and `ncol()` functions to get the number of rows (`nrow()`), number of columns (`ncol()`), and number of both rows and columns (`dim()`)
+
+```{r}
+dim(DNase)
+```
+
+```{r}
+nrow(DNase)
+```
+
+```{r}
+ncol(DNase)
+```
+
+We can use the `head()` function to look at the first few lines of the data frame:
+
+```{r}
+head(DNase)
+```
+
+You can use the `n` argument to look at a different number of lines
+
+```{r}
+head(DNase, n = 3)
+```
+
+We can use the `tail()` function to look at the last few lines of the data frame:
+
+```{r}
+tail(DNase, n = 5)
+```
+
+The summary function, which can be applied to either a vector or a data frame (in the latter case, R applies it separately to each column in the data frame) yields a variety of summary statistics about each variable.
+
+```{r}
+summary(DNase)
+```
+
+`summary()` is informative for numerical data, but not so helpful for factor data, as in the `Run` column. 
+Let's make a smaller subset of the `DNase` data to work with:
+
+```{r}
+DNase_subset <- DNase[1:20, ]
+DNase_subset
+```
+
+We can also sort our data. Let's look at the `conc` column:
+
+```{r}
+print(DNase_subset$conc)
+```
+
+Use the `order()` function to figure out the ascending rankings of the values
+
+```{r}
+order(DNase_subset$conc)
+```
+
+We can assign this ordering to a vector:
+
+```{r}
+reorder_vector <- order(DNase_subset$conc)
+```
+
+And use it to reorder our data frame:
+
+```{r}
+DNase_subset[reorder_vector, ]
+```
+
+# Ifelse() function 
+
+The ifelse() function is a shorthand function to the traditional if…else statement used in other programming languages. It takes a vector as an input and outputs a resultant vector. The general syntax for the ifelse statement is as follows:
+
+`returned_vector <- ifelse(test_expression, x, y)`
+
+This returned vector (i.e., returned_vector) has element from x if the corresponding value of test_expression is TRUE or from y if the corresponding value of test_expression is FALSE.
+Specifically, the i-th element of returned_vector will be x[i] if test_expression[i] is TRUE else it will take the value of y[i]. In other words, if the vectors [i]th element is even (evenly divisible by 0), return `even`, if  its odd then return `odd`.
+
+### Example of ifelse() use
+
+```{r}
+a = c(5,7,2,9)
+ifelse(a %% 2 == 0,"even","odd")
+```
+
+We can also specify that we want to know if the value is even -- otherwise, just report back what was in a originally
+
+```{r}
+ifelse(a %% 2 == 0,"even",a)
+```
+
+# User defined functions
+- In addition to the already available functions in R, you can also create your own functions. 
+- Generally, if you find yourself re-writing the same pieces of code over and over again, it might be time to write a function. 
+
+Functions take the following basic format:
+
+```
+myfunction <- function(argument_name){
+  stuff <- this is the body of the function(
+    it contains statements that use argument_names
+    to do things and make stuff)
+  return(stuff)
+}
+```
+
+More formally, R functions are broken up into 3 pieces:
+1. formals() - the list of arguments
+2. body() - code inside the function
+3. environment() - how the function finds the values associated with function names
+
+Here's an example of a function called `roll()` that rolls any number of 6-sided dice:
+
+```{r}
+roll <- function(number_of_dice){
+    rolled_dice <- sample(
+        x = 6, 
+        size = number_of_dice, 
+        replace = TRUE)
+    return(rolled_dice)
+}
+```
+
+- The built-in R function `sample()` is nested inside our `roll()` function.
+- `roll()` uses the argument `number_of_dice` as the `size`, `x` is the number of sides on the die, which we have hard-coded as `6`, and `replace = TRUE` means that we are sampling the space of all potential die roll outcomes with replacement.
+- Lastly, we tell the function what it should return (`rolled_dice`).
+
+To call that function and print the output:
+
+```{r}
+print(roll(number_of_dice = 10))
+```
+
+Lets look at the `formals()`
+
+```{r}
+formals(roll)
+```
+
+What about `body()`?
+
+```{r}
+body(roll)
+```
+
+What about `environment()`?
+
+```{r}
+environment(roll)
+```
+
+So, the function itself is called `roll`, it takes the argument or formals `number_of_dice` and the body of the function uses the built-in `sample` function in R to simulate dice rolls (use `?sample` to learn more about the `sample()` function).
+
+## More on user defined functions
+- We can also have functions that take more than one argument. 
+- Lets say we want to roll different numbers of dice (`number_of_dice`) and we want to change the size of the dice we roll (`number_of_sides`).
+
+```{r}
+roll <- function(
+    number_of_dice, 
+    number_of_sides){
+    rolled_dice <- sample(
+        x = number_of_sides, 
+        size = number_of_dice, 
+        replace = TRUE)
+    return(rolled_dice)
+}
+```
+
+- The new `roll()` uses the `sample()` function again, but this time it uses the `number_of_dice` and `number_of_sides`
+
+```{r}
+print(roll(number_of_dice = 5, number_of_sides = 20))
+```
+
+# Importing and Exporting files
+- There are a few different ways to read and write files in R.
+- We will use `read.table()` and `write.table()`.
+- Lets use some of the pre-loaded data that comes with R. 
+- First, let's import the `iris` data as a data frame and use `head()` to look at the first few lines
+
+```{r}
+iris <- data.frame(iris)
+head(iris)
+```
+
+You can write the output to a file using `write.table`:
+
+```{r}
+write.table(iris, file = '~/iris_table.txt')
+```
+
+Use `read.table()` to pull data into R:
+
+```{r}
+iris_table_2 <- read.table('~/iris_table.txt')
+```
+
+```{r}
+head(iris_table_2)
+str(iris_table_2)
+```
+
+Another convenient function is `list.files()`, which you can use with a wildcard (`*`) to return a list of all files in a directory (specified in `path =`) that start with `iris_`:
+
+```{r}
+list.files(path = '~', pattern = 'iris_*')
+```
+
+# Apply functions
+- Apply functions let you repetitively perform a function across a data structures, like matrices, lists, and dataframes.
+
+## apply()
+`apply()` will apply a function to the margins of an array or matrix. The usage is:`apply(X, MARGIN, FUN)`. When `MARGIN = 1`, the function applies to rows, when `MARGIN = 2` the function applies to columns.
+
+```{r}
+apply(X = iris, MARGIN = 2, FUN = max)
+```
+
+It is also trying to compute the max of the `Species` column. We can specify that we only want to use the first 4 columns and compute the mean instead of the max:
+
+```{r}
+apply(X = iris[,c(1:4)], MARGIN = 2, FUN = mean)
+```
+
+## lapply()
+`lapply()` will apply a function to a list and will also return a list. The usage is similar to `apply`:
+`lapply(X, FUN)`
+
+We can convert all the columns in the iris data into a list and then use `lapply` to compute the means of the first 4.
+
+```{r}
+iris_list <- as.list(iris)
+iris_means <- lapply(X = iris_list[1:4], FUN = mean)
+print(iris_means)
+```
+
+You can also use a custom on the fly function:
+
+```{r}
+numbers <- list(1, 2, 3, 4)
+logs <- lapply(X = numbers, FUN = function(x) log(x+1))
+print(numbers)
+print(logs)
+```
+
+## sapply()
+`sapply()` will apply a function to a list but will return the simplest possible output. The usage is similar to `apply`:
+`sapply(X, FUN)`.
+
+```{r}
+slogs <- sapply(X = numbers, FUN = function(x) log(x+1))
+print(slogs)
+```
+
+## tapply()
+`tapply()` will apply a function by some grouping variable. The usage is
+`tapply(X, INDEX, FUN)`. We can index by the iris Species column and compute the mean sepal length per species:
+
+```{r}
+tapply(X = iris$Sepal.Length, 
+       INDEX = iris$Species, 
+       mean)
+```
+
+## mapply()
+`mapply()` is a multivariate version of `sapply` - it will apply the function to the sequential elements of each argument. We can create some input vectors and paste them together to understand how `mapply` works:
+
+```{r}
+prefixes <- c("A", "B", "C")
+values <- c(100, 200, 300)
+suffixes <- c("X", "Y", "Z")
+
+labels <- mapply(paste, prefixes, values, suffixes, sep = "_")
+print(labels)
+```
+
+# R packages
+- Although R comes with many built in functions, you will probably want to install and use various R packages.
+- You can install the packages using `install.packages('package_name_here')` (where you would replace 'package_name_here' with your package of choice, in quotes). 
+- This will download the package and any additional required dependencies. 
+- Run the next cell to install the `ggplot2` package:
+
+```{r}
+#install.packages('ggplot2')
+```
+
+Before you can actually use the package, you have to load it as follows:
+
+```{r}
+library('ggplot2')
+```
+
+### Most R packages are found in CRAN - the central repository for R packages. However, packages can be found in different places. Many of the packages of interest for biologists will be in Bioconductor. 
+
+There are two steps to downloading a package from Bioconductor -- first, install BiocManager.
+
+```{r}
+install.packages("BiocManager")
+```
+
+Then, load `BiocManager` and use `BiocManager::install()` to install a package.
+
+```{r}
+library('BiocManager')
+BiocManager::install("org.Hs.eg.db")
+```
+
+Use the `sessionInfo()` function to see more information about your loaded R packages and namespace:
+
+```{r}
+print(sessionInfo())
+```
