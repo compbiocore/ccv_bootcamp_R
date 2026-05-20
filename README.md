@@ -9,8 +9,9 @@ These workshop materials can be used from a Brown University Open OnDemand RStud
 1. Sign in to the Brown Open OnDemand portal.
 2. Open **Interactive Apps** and start an **RStudio Session**.
 3. Choose the **Singularity**-based RStudio option for the session.
-4. If the OOD form asks for the workshop container source/reference, use `https://github.com/compbiocore/ccv_bootcamp_R`.
+4. Use the preexisting workshop image at `/oscar/data/shared/workshops/ccv_bootcamp_r_2026.sif` when selecting the container image for the session.
 5. Launch the session and wait for RStudio to open in your browser.
+6. If you prefer to recreate the workshop image yourself, the repository includes `/home/runner/work/ccv_bootcamp_R/ccv_bootcamp_R/Dockerfile` as the container definition.
 
 ## Clone the workshop repository in RStudio
 
@@ -39,4 +40,4 @@ Once the RStudio Session starts:
 ## Other workshop materials
 
 - `R_Bootcamp_Tidyverse_ggplot2.Rmd` - follow-on workshop material covering tidyverse and ggplot2.
-- `Dockerfile` - container definition used for the workshop environment.
+- `Dockerfile` - container definition you can use if you want to recreate the workshop image yourself instead of using the shared `/oscar/data/shared/workshops/ccv_bootcamp_r_2026.sif` image.
