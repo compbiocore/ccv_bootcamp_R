@@ -1,0 +1,1420 @@
+---
+title: "R Bootcamp: Tidyverse and ggplot2"
+output: html_document
+---
+
+# Data Wrangling and Tidyverse  
+
+In this notebook you'll learn principles behind data wrangling and management, including tidying and transforming data to answer questions you might want to ask. Much of this workshop is adapted from `R for data science` (https://r4ds.hadley.nz/).
+
+## Some useful notes
+
+With Jupyter Notebook you can get a nice popup of function definitions just like you can in RStudio. Simply navigate to a cell or start a new one, and enter in ?function like you would normally. A popup will appear.
+
+You should see an Insert dropdown menu and Run button at the top which lets you add cells as well as run code or render Markdown in the cells, but these are very useful keyboard shortcuts for the same functions: 
+
+- Shift+Enter: Run code or render Markdown in the current cell you're on
+- Esc+a: Add a cell above
+- Esc+b: Add a cell below
+- Esc+dd: Delete a cell
+
+## Package prerequisites 
+
+Packages that are required in this workshop are tidyverse (which includes the packages ggplot2, dplyr, purrr, and others), gridExtra, which helps with arranging plots next to each other, ggrepel, which helps with plotting labels, and maps, which is for map data.
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(gridExtra)
+library(ggrepel)
+library(maps)
+library(pillar)
+```
+
+# Data Frames
+
+- A data frame is another way to organize a collection of rows and columns.
+- It is a collection of lists organized into columns.
+- It is similar to a matrix, except data frames allow different data types in different columns.
+- We can use the `data.frame()` function to create a data frame from vectors using the following format:
+
+```
+dataframe <- data.frame(column_1, column_2, column_3)
+```
+
+```{r}
+example_df <- data.frame(
+    c('a','b','c'), 
+    c(1, 3, 5), 
+    c(TRUE, TRUE, FALSE))
+
+print(example_df)
+```
+
+Use `names()` or `colnames()` to name columns,  `rownames()` to name rows, or `dimnames()` to assign both column and row names to the data frame:
+
+```{r}
+colnames(example_df) <- c('letters', 'numbers', 'boolean')
+rownames(example_df) <- c('first', 'second', '')
+print(example_df)
+```
+
+```{r}
+names(example_df) <- c('_letters_', '_numbers_', '_boolean_')
+print(example_df)
+```
+
+```{r}
+dimnames(example_df) <- list(c('__first', '__second', '__third'), c('__letters', '__numbers', '__boolean'))
+print(example_df)
+```
+
+We can use the `attributes()` and `str()` functions to get some information about our data frame:
+
+```{r}
+attributes(example_df)
+```
+
+```{r}
+str(example_df)
+```
+
+Data frames can be classified into two broad categories: wide format and long format. All data frames shown so far have been presented in wide format. A wide format data frame has each row describe a sample and each column describe a feature. Here is a short example of a data frame in wide format, tabulating counts for three genes in three patients:
+
+```{r}
+wide_df <- data.frame(c("A", "B", "C"), c(1, 1, 2), c(5, 6, 7), c(0, 1, 0))
+colnames(wide_df) <- c("id", "gene.1", "gene.2", "gene.3")
+wide_df
+```
+
+Long format stacks features on top of one another; each row is the combination of a sample and a feature.  One column exists to denote the feature in question, and another column exists to denote that feature' value:
+
+```{r}
+long_df <- data.frame(c("A", "A", "A", "B", "B", "B", "C", "C", "C"), c("gene.1", "gene.2", "gene.3", "gene.1", "gene.2", "gene.3", "gene.1", "gene.2", "gene.3"), c(1, 5, 0, 1, 6, 1, 2, 7, 0))
+colnames(long_df) <- c("id", "gene", "count")
+long_df
+```
+
+These formats both contain the exact same data but represent it in different ways. Various functions exist to convert between wide and long format and we'll get into this a bit more shortly when discussing the `tidyr` package.
+
+# Adding columns to a data frame
+
+Let's make a new example dataframe to work with:
+
+```{r}
+patients_1 <- data.frame(
+    c('Boo','Rex','Chuckles'), 
+    c(1, 3, 5), 
+    c('dog', 'dog', 'dog'))
+print(patients_1)
+```
+
+Use `names()` or `colnames()` to name columns,  `rownames()` to name rows, or `dimnames()` to assign both column and row names to the data frame.
+Here we will use `names()` to name the columns:
+
+```{r}
+names(patients_1) <- c('name', 'number_of_visits', 'type')
+print(patients_1)
+```
+
+We can use the column names to extract a single column using the notation `dataframe$column`, e.g.:
+
+```{r}
+print(patients_1$name)
+```
+
+The `cbind()` function can be used to add more columns to a dataframe:
+
+```{r}
+column_4 <- c(4, 2, 6)
+patients_1 <- cbind(patients_1, column_4)
+print(patients_1)
+```
+
+We can also rename individual columns of the dataframe using index notation, lets rename the 4th column we just added:
+
+```{r}
+colnames(patients_1)[4] <- 'age_in_years'
+print(patients_1)
+```
+
+We can also use the `dataframe$column` notation to add a new column and name it at the same time:
+
+```{r}
+patients_1$weight_in_pounds <- c(35, 75, 15)
+print(patients_1)
+```
+
+Let's use `str()` and `attributes()` functions to look at the structure and attributes of this data frame:
+
+```{r}
+str(patients_1)
+```
+
+```{r}
+attributes(patients_1)
+```
+
+# Data frame merging
+- Data is often spread across more than one file, reading each file into R will result in more than one data frame. 
+- If the data frames have some common identifying column, we can use that common ID to combine the data frames. 
+
+For example:
+
+```{r}
+print(patients_1)
+```
+
+Let's make another data frame:
+
+```{r}
+patients_2 <- data.frame(
+    c('Fluffy', 'Smokey', 'Kitty'), 
+    c(1, 1, 2), 
+    c('cat', 'dog', 'cat'),
+    c(1, 3, 5))
+colnames(patients_2) <- c('name', 'number_of_visits', 'type', 'age_in_years')
+print(patients_2)
+```
+
+We can use the `merge()` function to combine them:
+
+```{r}
+patients_df <- merge(patients_1, patients_2, all = TRUE)
+print(patients_df)
+```
+
+- Using `all = TRUE` will fill in blank values if needed (for example, the weight of any of the animals in `patients_2`).
+- Using the `all.x = TRUE` argument will return all values in the `patients_1` dataframe, as well as any entries with the same ID column(s) from `patients_2`.
+
+```{r}
+patients_df <- merge(patients_1, patients_2, all.x = TRUE)
+print(patients_df)
+```
+
+- Using the `all.y = TRUE` argument will return all values in the `patients_2` dataframe, as well as any entries with the same ID column(s) from `patients_1`.
+
+```{r}
+patients_df <- merge(patients_1, patients_2, all.y = TRUE)
+print(patients_df)
+```
+
+You can also specify which columns to join on:
+
+```{r}
+patients_df <- merge(patients_1, patients_2, by = c('name', 'type', 'number_of_visits', 'age_in_years'), all = TRUE)
+print(patients_df)
+```
+
+# Tidying Data
+
+Most datasets are data frames made up of rows and columns. However, talking about data frames just in terms of what rows and columns it has is not enough.
+
+ * **Variable:** quantity, quality, property that can be measured.
+ * **Value:** State of variable when measured.
+ * **Observation:** Set of measurements made under similar conditions
+ * **Tabular data:** Set of values, each associated with a variable and an observation.
+
+Tidy data:
+ * Each variable is its own column
+ * Each observation is its own row
+ * Each value is in a single cell
+ 
+Benefits:
+ * Easy to manipulate
+ * Easy to model
+ * Easy to visualize
+ * Has a specific and consistent structure
+ * Stucture makes it easy to tidy other data
+ 
+Cons:
+ * Data frame is not as easy to look at
+
+Consider the following tables:
+
+```{r}
+table1 <- data.frame(makemodel=c("audi a4","audi a4","chevrolet corvette","chevrolet corvette","honda civic","honda civic"),
+                    year=rep(c(1999,2008),3),
+                    cty=c(18,21,15,15,24,25),
+                    hwy=c(29,30,23,25,32,36))
+table1
+```
+
+This is tidy data, because each column is a variable, each observation is a row, and each value is in a single cell
+
+Next we will look at some non-tidy data and operations from the **tidyr** package (part of **tidyverse**) to make the data tidy. Note that many of you might be more used to using operations from **reshape2**, like melting and casting. It's a very useful package with more functionality including aggregating data, but syntax with **tidyr** commands is simpler and more intuitive for the purposes of tidying data.
+
+## pivot_wider
+
+We can use the `pivot_wider` function to get our data in wide format (less rows, more columns). It accepts the following arguments:
+`id_cols` - a set of columns that uniquely identified each observation, defaults to all values in your data except what you specify in `names_from` and `values_from`. `names_from` and `values_from` describe which columns will be used to name the output column (`names_from`) and which column will be used to populate the call values (`values_from`). To see the rest of the optional arguments, use `?pivot_wider`.
+
+```{r}
+?tidyr::pivot_wider
+```
+
+```{r}
+table2 <- tidyr::pivot_wider(table1,
+            names_from = year,
+            values_from = c(cty, hwy))
+table2
+```
+
+## pivot_longer
+
+`pivot_longer` is the inverse transformation of `pivot_wider`. It'll make your data longer (more rows, less columns). It accepts the following arguments:`cols` are the columns to pivot into longer format, `names_to` a string specifying the name of the column to create from the data stored in the column names of the input data, `values_to` a string specifying the name of the column to create from the data stored in the cell values.
+
+```{r}
+tidyr::pivot_longer
+```
+
+```{r}
+table3 <- tidyr::pivot_longer(table2,
+                       cols = !makemodel,
+                       names_to = 'mpg_year',
+                      values_to = 'value')
+table3
+```
+
+## Separating
+
+`table3` has a `mpg_year` column that actually contains two variables, which we can separate into two columns. There are three flavors of `separate`. Each of these functions takes a string column and splits it into multiple new columns:
+
+    separate_wider_delim() splits by delimiter.
+
+    separate_wider_position() splits at fixed widths.
+
+    separate_wider_regex() splits with regular expression matches.
+
+We can split the new `mpg_year` column we just made using `separate_wider_delim`
+
+```{r}
+table4 <- tidyr::separate_wider_delim(data = table3, cols = mpg_year, names = c("mpg", "year"), delim="_")
+table4
+```
+
+`pivot_wider` to get things tidy again
+
+```{r}
+table5 <- tidyr::pivot_wider(table4,
+            names_from = mpg,
+            values_from = value)
+table5
+```
+
+## Uniting
+
+Let's say we want to unite `cty` and `hwy` to be one column. We can do this using the `unite` function.
+
+`Unite` will accept the following arguments: `col` the name of the new column, `sep` as the separator between values, and the columns to unite are indicated using `:` or listing them out as below.
+
+```{r}
+?tidyr::unite
+```
+
+```{r}
+table6 <- tidyr::unite(table5, col = cty_hwy, cty, hwy, sep='_')
+table6
+```
+
+## Piping
+
+dplyr from tidyverse contains the 'pipe' (`%>%`) which allows you to combine multiple operations, directly taking output from a funtion as input to the next. Can save time and memory as well as make code easier to read. Can think of it this way: x %>% f(y) becomes f(x,y), and x %>% f(y) %>% g(z) becomes g(f(x,y),z), etc. As of R 4.1.0, base R also has pipe functions (`|>`). Except for some edge cases, they function very similarly to the pipes from tidyverse/magrittr, but this blog post highlights some differences (https://www.tidyverse.org/blog/2023/04/base-vs-magrittr-pipe/), which we also list here:
+
+
++ By default, the pipe passes the object on its left-hand side to the first argument of the function on the right-hand side. `%>%` allows you to change the placement with a `.` placeholder. For example, `x %>% f(1)` is equivalent to `f(x, 1)` but `x %>% f(1, .)` is equivalent to `f(1, x)`. R 4.2.0 added a `_` placeholder to the base pipe, with one additional restriction: the argument has to be named. For example, `x |> f(1, y = _)` is equivalent to `f(1, y = x)`.
+
++ The `|>` placeholder is deliberately simple and can’t replicate many features of the `%>%` placeholder: you can’t pass it to multiple arguments, and it doesn’t have any special behavior when the placeholder is used inside another function. For example, `df %>% split(.$var)` is equivalent to `split(df, df$var)`, and `df %>% {split(.$x, .$y)}` is equivalent to `split(df$x, df$y)`.
+
++ With `%>%`, you can use `.` on the left-hand side of operators like `$`, `[[`, `[` , so you can extract a single column from a data frame with (e.g.) `mtcars %>% .$cyl`. R added support for this feature in R 4.3.0. For the special case of extracting a column out of a data frame, you can also use `dplyr::pull()`: `mtcars |> pull(cyl)`
+
++ `%>%` allows you to drop the parentheses when calling a function with no other arguments; `|>` always requires the parentheses.
+
++ `%>%` allows you to start a pipe with `.` to create a function rather than immediately executing the pipe; this is not supported by the base pipe.
+
+We can use the magrittr pipe or the base R pipe and they will usally do the same thing
+
+```{r}
+table_1999 <- tidyr::unite(table5, col = cty_hwy, cty, hwy, sep='_') %>% filter(year == 1999)
+```
+
+```{r}
+table_2008 <- tidyr::unite(table5, col = cty_hwy, cty, hwy, sep='_') |> filter(year == 2008)
+```
+
+You can use the `.` placeholder to place the information on the left side of the pipe into another spot other than the first function argument, like this:
+
+```{r}
+mtcars %>% 
+   lm(mpg ~ disp, data = .)
+```
+
+But this will not work with base R pipes:
+
+```{r}
+mtcars |>
+   lm(mpg ~ disp, data = .)
+```
+
+You'd have to do something like this:
+
+```{r}
+mtcars |> 
+   (function(x) lm(mpg ~ cyl, data = x))()
+```
+
+## Joins
+
+We can merge tables using join function -- https://dplyr.tidyverse.org/reference/mutate-joins.html). 
+
+    inner_join(): includes all rows in x and y.
+
+    left_join(): includes all rows in x.
+
+    right_join(): includes all rows in y.
+
+    full_join(): includes all rows in x or y.
+
+This will combine dataframes based on what column you specify in the `by` argument.
+
+```{r}
+dplyr::left_join(table_1999, table_2008, by = 'makemodel')
+```
+
+**join() vs merge()**
+
+1. join() is faster than merge(), particularly if data  is large.
+
+2. join() preserves the original order of rows, merge() function automatically sorts the rows alphabetically based on the column you used to perform the join.
+
+## bind_rows()
+
+Bind any number of data frames by row, making a longer result. This is similar to do.call(rbind, dfs), but the output will contain all columns that appear in any of the inputs.
+
+```{r}
+bind_rows(a=table_1999, b=table_2008)
+```
+
+```{r}
+If there are different columns in the two tables, the resulting table will have some `NA` values:
+```
+
+```{r}
+table_1999$is_1999 <- 'yes'
+bind_rows(a=table_1999, b=table_2008)
+```
+
+You can supply the `.id` argument to keep track of which data source each row comes from (based on the order the arguments are supplied to `bind_rows`:
+
+```{r}
+bind_rows(a=table_1999, b=table_2008, .id = "ID")
+```
+
+## Not all data should be tidy
+
+Matrices, phylogenetic trees (although `ggtree` and `treeio` have tidy representations that help with annotating trees), etc.
+
+# Transforming (Tidy) Data
+
+Now we know how to get tidy data. At this point we can already start visualizing our data. However in many cases we will need to further transform our data to narrow down variables and observations we are really interested in or to create new variables that are functions of our existing variables and data. This is known as **transforming** data.
+
+ * `filter()` to pick observations (rows) by their values
+ * `arrange()` to reorder rows, default is by ascending value
+ * `select()` to pick variables (columns) by their names
+ * `mutate()` to create new variables with functions of existing variables
+ * `summarise()` to collapes many values down to a single summary
+ * `group_by()` to set up functions to operate on groups rather than the whole data set
+ * `%>%` propagates the output from a function as input to another. eg: x %>% f(y) becomes f(x,y), and x %>% f(y) %>% g(z) becomes g(f(x,y),z).
+ 
+All functions have similar structure:
+ 1. First argument is data frame
+ 2. Next arguments describe what to do with data frame using variable names
+ 3. Result is new data frame
+ 
+We will be working with the **mpg** data frame for the rest of workshop which comes with the **tidyverse** library.
+
+```{r}
+data(mpg)
+head(mpg)
+```
+
+## `filter()` rows/observations
+
+As name suggests filters out rows. First argument is name of data frame, next arguments are expressions that filter the data frame.
+
+```{r}
+?dplyr::filter
+```
+
+```{r}
+# filter out 2 seater cars
+table(mpg$class)
+no_2seaters <- dplyr::filter(mpg, class != "2seater")
+head(no_2seaters)
+table(no_2seaters$class)
+```
+
+```{r}
+# filter out audis, chevys, and hondas
+mpg %>% dplyr::filter(!manufacturer %in% c("audi","chevrolet","honda")) %>% head
+```
+
+## `arrange()` rows/observations
+
+Changes order of rows. First argument is name of data frame, next arguments are column names (or more complicated expressions) to order by. Default column ordering is by ascending order, can use `desc()` to do descending order. Missing values get sorted at the end regardless of what column ordering is chosen.
+
+```{r}
+?dplyr::arrange
+```
+
+```{r}
+# arrange/reorder mpg by class
+dplyr::arrange(mpg, class) %>% head
+```
+
+```{r}
+# arrange/reorder data frame with 2seaters filtered out by class
+# 2seaters does not appear which is as it should be
+## `arrange()` rows/observations
+
+dplyr::arrange(no_2seaters, class) %>% head
+```
+
+What kinds of cars have the best highway and city gas mileage?
+
+```{r}
+# arrange mpg so that first hwy mileage is by descending order, then cty mileage is by descending order
+dplyr::arrange(mpg, desc(hwy), desc(cty)) %>% head
+```
+
+Example of missing data getting placed at bottom.
+
+```{r}
+df <- data.frame(x=c(5,2,NA,6))
+df
+```
+
+```{r}
+# arrange df by ascending order, NA will be at bottom
+dplyr::arrange(df, x)
+```
+
+```{r}
+# arrange df by descending order, NA will be at bottom
+dplyr::arrange(df, desc(x))
+```
+
+```{r}
+# rest of the values are unsorted because they are all T for !is.na(x)
+dplyr::arrange(df,!is.na(x))
+```
+
+```{r}
+# can arrange by x again to get ascending order
+dplyr::arrange(df,!is.na(x),desc(x))
+```
+
+## `select()` columns/variables
+
+Selects columns, which can be useful when you have hundreds or thousands of variables in order to narrow down to what variables you're actually interested in. First argument is name of data frame, subsequent arguments are columns to select. Can use `a:b` to select all columns between `a` and `b`, or use `-a` to select all columns *except* a.
+
+```{r}
+?dplyr::select
+```
+
+```{r}
+# select manufacturer, model, year, cty, hwy
+dplyr::select(mpg, manufacturer, model, year, cty, hwy) %>% head
+```
+
+```{r}
+# select all columns model thru hwy
+dplyr::select(mpg, model:hwy) %>% head
+head(mpg)
+```
+
+```{r}
+# select all columns except cyl thru drv and class
+dplyr::select(mpg, -(cyl:drv), -class) %>% head
+```
+
+## `mutate()` to add new variables or `transmute()` to keep only new variables
+
+Adds new columns that are functions of existing columns. First argument is name of data frame, next arguments are of the form `new_column_name = f(existing columns)`.
+
+```{r}
+?dplyr::mutate
+```
+
+```{r}
+# add a new column that takes average mileage between city and highway
+dplyr::mutate(mpg, avg_mileage = (cty+hwy)/2) %>% head
+```
+
+```{r}
+# keep only average mileage between city and highway
+dplyr::transmute(mpg,cty,avg_mileage=(cty+hwy)/2) %>% head
+```
+
+## `summarise()` and `group_by()` for grouped summaries
+
+`summarise()` collapses a data frame into a single row, and `group_by()` changes analysis from entire data frame into individual groups.
+
+```{r}
+?dplyr::summarise
+```
+
+```{r}
+?dplyr::group_by
+```
+
+```{r}
+# get average mileage grouped by engine cylinder
+m <- dplyr::mutate(mpg, avg_mileage=(cty+hwy)/2)
+# behavior is actually different in R/RStudio compared to notebooks
+m %>% dplyr::group_by(cyl) %>%
+    dplyr::summarise(avg=mean(avg_mileage)) %>%
+    head
+```
+
+**Note:** If you look at the output of `group_by` in R/RStudio you will actually be able to see what your groupings are as well as how many of them you have. For example if we did `group_by(mpg, cyl)` the output would include `cyl [4]` which shows that our grouping is by `cyl` and there are 4 groups. Jupyter notebook doesn't display this for reasons having to do with [how data frames are outputted](https://github.com/IRkernel/repr/issues/113). Some other differences exist between how certain objects from **tidyverse** are displayed as well.
+
+```{r}
+dplyr::group_by(m, drv) %>%
+    dplyr::summarise(avg=mean(avg_mileage))
+```
+
+```{r}
+# df after group_by would show that we have 9 groups
+drv_cyl <- dplyr::group_by(m, drv, cyl) %>%
+    dplyr::summarise(avg=mean(avg_mileage)) %>%
+    dplyr::arrange(desc(avg))
+drv_cyl
+```
+
+Can also run `ungroup` to ungroup your observations.
+
+```{r}
+drv_cyl %>% dplyr::summarise(max=max(avg))
+```
+
+```{r}
+ungroup(drv_cyl) %>% dplyr::summarise(max=max(avg))
+```
+
+## `across()` to apply a function (or functions) across multiple columns
+`across()` makes it easy to apply the same transformation to multiple columns, allowing you to use `select() semantics inside in "data-masking" functions like `summarise()` and `mutate()`.
+
+```{r}
+gdf <-
+  tibble(g = c(1, 1, 2, 3), v1 = 10:13, v2 = 20:23) %>%
+  group_by(g)
+
+set.seed(1)
+gdf
+```
+
+```{r}
+n <- rnorm(1)
+n
+```
+
+```{r}
+gdf %>% mutate(across(v1:v2, ~ .x + n))
+```
+
+
+# ggplot2
+
+# Essentials of GGplotting with R 
+In this notebook you'll learn about using ggplot2 to make publication quality figures.
+
+## Some useful notes
+
+With Jupyter Notebook you can get a nice popup of function definitions just like you can in RStudio. Simply navigate to a cell or start a new one, and enter in ?function like you would normally. A popup will appear.
+
+You should see an Insert dropdown menu and Run button at the top which lets you add cells as well as run code or render Markdown in the cells, but these are very useful keyboard shortcuts for the same functions: 
+
+- Shift+Enter: Run code or render Markdown in the current cell you're on
+- Esc+a: Add a cell above
+- Esc+b: Add a cell below
+- Esc+dd: Delete a cell
+
+# Prerequisites
+
+```{r}
+library(tidyverse)
+library(gridExtra)
+library(ggrepel)
+library(maps)
+```
+
+# Visualizing Data
+
+Core feature of exploratory data analysis is asking questions about data and searching for answers by visualizing and modeling data. Most questions around what type of variation or covariation occurs between variables.
+
+Base R comes with some functions to visualize your data -- base R plots might look something like this:
+
+```{r}
+options(repr.plot.width=10, repr.plot.height=7)
+# regular plot functions in R
+plot(x=mpg$displ,y=mpg$hwy)
+```
+
+You can also use ggplot2 for your visualizations -- here's an example of default parameters in ggplot2:
+
+```{r}
+# ggplot!
+ggplot(data=mpg) + geom_point(mapping=aes(x=displ,y=hwy))
+```
+
+You can also make publication-quality visualizations using ggplot2:
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth(se = FALSE) +
+  labs(x="Engine displacement (L)",y="Heighway fuel economy (mpg)",
+    title = "Fuel efficiency generally decreases with engine size",
+    caption = "Data from fueleconomy.gov",
+    subtitle = "Two seaters (sports cars) are an exception because of their light weight",
+    colour = "Car type"
+  ) + theme_classic()
+```
+
+# Visualizing Data
+
+All plots in ggplot follow the same syntax:
+
+```
+ggplot(data=<DATA>) +
+    <GEOM_FUNCTION>(mapping=aes(<MAPPINGS>)
+```
+
+Let's use the `head()` function to look at the data we plotted in the above examples:
+
+```{r}
+head(mpg) # automatically loaded when you load tidyverse
+```
+
+Let's break down the components of ggplot. First, note that `ggplot(data=<DATA>)` on its own will not actually plot anything.
+
+```{r}
+ggplot(mpg)
+```
+
+This is because we need the `<GEOM_FUNCTION>(mapping=aes(<MAPPINGS>)` to tell us what exactly to plot using our data. However, just `ggplot(data=<DATA>) + <GEOM_FUNCTION>()` on its own doesn't do anything either.
+
+```{r}
+ggplot(mpg) + geom_point()
+```
+
+So in fact we need *all* of the components described in the ggplot syntax.
+
+```{r}
+ggplot(mpg) + geom_point(mapping=aes(x=displ,y=hwy))
+```
+
+## `<MAPPINGS>`
+
+```
+ggplot(data=<DATA>) +
+    <GEOM_FUNCTION>(mapping=aes(<MAPPINGS>)
+```
+
+Mappings refer to the visual properties of objects in the plot, i.e. size, shape, color. Can display points from other variables (in this case class) in different ways by changing value of aesthetic properties. These are known as **levels**, which is done in order to distinguish aesthetic values from data values.
+
+Let's try using `geom_point` to make some scatter plots and we can modify the mappings to change how we represent the `class` categories.
+
+```{r}
+p1 <- ggplot(data=mpg) + geom_point(mapping=aes(x=displ,y=hwy,color=class))
+p2 <- ggplot(data=mpg) + geom_point(mapping=aes(x=displ,y=hwy,shape=class))
+p3 <- ggplot(data=mpg) + geom_point(mapping=aes(x=displ,y=hwy,size=class))
+p4 <- ggplot(data=mpg) + geom_point(mapping=aes(x=displ,y=hwy,alpha=class))
+grid.arrange(p1,p2,p3,p4,nrow=2)
+```
+
+So, we can represent the `class` data as the `color`, `shape`, `size`, or `alpha` (transparency scales). As you can see, not all mappings lend themselves to all data -- there's only 6 `shape` options available (we would need 7) and `alpha` and `size` aren't recommended for discrete data.
+
+### Levels
+
+**ggplot2** automatically assigns a unique level of an aesthetic to a unique value of the variable. This process is known as scaling. It will also automatically select a scale to use with the aesthetic (i.e. continuous or discrete) as well as add a legend explaining the mapping between levels and values. That's why in the shape mapping there's no shape for suv, and why the following two pieces of code do different things:
+
+For color property, all data points were assigned to 'blue', therefore ggplot2 assigns a single level to all of the points, which is red
+
+```{r}
+ggplot(data=mpg) + geom_point(mapping=aes(x=displ,y=hwy,color='blue'))
+```
+
+Here, color is placed outside aesthetic mapping, so ggplot2 understands that we want color of points to be blue
+
+```{r}
+ggplot(data=mpg) + geom_point(mapping=aes(x=displ,y=hwy),color='blue')
+```
+
+`cty` is a continuous variable, so when mapped to color we get a gradient with bins instead
+
+```{r}
+ggplot(data=mpg) + geom_point(mapping=aes(x=displ,y=hwy,color=cty))
+```
+
+### Continuous vs discrete scales
+
+Generally continuous scales get chosen for numerical data and discrete scales are chosen for categorical data. If your data is numeric but in discrete categories you may have to use `as.factor()` in order to get proper levels.
+
+If we try to map `cyl` to `shape` we get an error because `shape` is only for discrete variables even though we only have `cyl`=4,5,6 or 8
+
+```{r}
+ggplot(data=mpg) + geom_point(mapping=aes(x=displ,y=hwy,shape=cyl))
+```
+
+We can transform `cyl` into categorical variable with levels using the `as.factor` function:
+
+```{r}
+as.factor(mpg$cyl)
+```
+
+Now we can try plotting again:
+
+```{r}
+ggplot(data=mpg) + geom_point(mapping=aes(x=displ,y=hwy,shape=as.factor(cyl)))
+```
+
+Note that this means x and y are aesthetic mappings as well. In fact without them you will get an error.
+
+```{r}
+ggplot(data=mpg) + geom_point()
+```
+
+## `<GEOM_FUNCTION>`
+
+```
+ggplot(data=<DATA>) +
+    <GEOM_FUNCTION>(mapping=aes(<MAPPINGS>)
+```
+
+**geom** is geometrical object that the plot uses to represent data. Bar charts use bar geoms, line charts use line geoms, scatterplots use point geoms, etc. Full list of geoms provided with **ggplot2** can be seen in [ggplot2 reference](https://ggplot2.tidyverse.org/reference/#section-layer-geoms). Also exist other geoms created by [other packages](http://www.ggplot2-exts.org/gallery/).
+
+Every geom function in ggplot2 takes a `mapping` argument with specific aesthetic mappings that are possible. Not every aesthetic will work with every geom. For example, can set shape of a point, but not shape of a line. However, can set linetype of a line.
+
+```{r}
+ggplot(data = mpg) +
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+```
+
+We can also specify that the `linetype` should be `as.factor(cyl)` and see that the data has been separated into three lines based on their drivetrain: 4 (4wd), f (front), r (rear)
+
+```{r}
+ggplot(data = mpg) +
+  geom_smooth(mapping = aes(x = displ, y = hwy, linetype = as.factor(cyl)))
+```
+
+Can display multiple geoms on same plot just by adding them -- lets add `geom_smooth` to `geom_point`:
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, color=drv)) +
+  geom_smooth(mapping = aes(x = displ, y = hwy, color=drv, linetype=drv))
+```
+
+Geoms like `geom_smooth()` use single geometric object to display multiple rows of data. If you don't necessarily want to add other distinguishing features to the geom like color, can use `group` aesthetic (for a categorical variable) to draw multiple objects.
+
+```{r}
+ggplot(data=mpg) +
+    geom_smooth(mapping=aes(x=displ,y=hwy,group=drv))
+```
+
+You can use `?geom_smooth` to see a full list of which aesthetics `geom_smooth` will understand.
+
+### Global mappings vs local mappings
+
+`ggplot()` function contains *global* mapping, while each geom has a local mapping
+
+Global mapping of `displ` and `hwy` creates the x and y axes:
+
+```{r}
+ggplot(data=mpg, mapping=aes(x=displ,y=hwy))
+```
+
+Mapping `color` to `class` for point geom while using global x and y mappings:
+
+```{r}
+ggplot(data=mpg, mapping=aes(x=displ,y=hwy)) + geom_point(mapping=aes(color=class))
+```
+
+`geom_smooth` doesn't need any mapping arguments if using global mapping:
+
+```{r}
+ggplot(data=mpg, mapping=aes(x=displ,y=hwy)) +
+    geom_point(mapping=aes(color=class))+
+    geom_smooth()
+```
+
+The second `geom_smooth` uses same x and y mapping but mapping comes from `no_2seaters` data (from the Tidyverse section of the workshop) instead
+
+```{r}
+no_2seaters <- filter(mpg, class != "2seater")
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color = class)) + 
+  geom_smooth() +
+  geom_smooth(data = no_2seaters)
+```
+
+## More syntax
+
+    We have gone over the minimum required syntax for ggplot, but there are additonal options that can be specified to further customize your plots, such as <FACET_FUNCTION>:
+
+```{r}
+ggplot(data = <DATA>) + 
+  <GEOM_FUNCTION>(
+     mapping = aes(<MAPPINGS>),
+     stat = <STAT>, 
+     position = <POSITION>
+  ) +
+  <COORDINATE_FUNCTION> +
+  <FACET_FUNCTION>
+```
+
+## Facets
+
+Facets can be used to create subplots displaying one subset of data.
+
+ * `facet_wrap()` for a single variable.
+ * `facet_grid()` for along 2 variables.
+
+```{r}
+ggplot(data=mpg) +
+    geom_point(mapping=aes(x=displ,y=hwy)) +
+    facet_wrap(~ class, nrow=2)
+```
+
+You can use the `nrow` argument to change the arrangement of the subplots:
+
+```{r}
+ggplot(data=mpg) +
+    geom_point(mapping=aes(x=displ,y=hwy)) +
+    facet_wrap(~ class, nrow=3)
+```
+
+```{r}
+ggplot(data=mpg) +
+    geom_point(mapping=aes(x=displ,y=hwy)) +
+    facet_wrap(~ class, ncol=4)
+```
+
+When using `facet_grid`, some facets might be empty because no observations have those combinations:
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_grid(drv ~ cyl)
+```
+
+## Stats
+
+```{r}
+ggplot(data = <DATA>) + 
+  <GEOM_FUNCTION>(
+     mapping = aes(<MAPPINGS>),
+     stat = <STAT>, 
+     position = <POSITION>
+  ) +
+  <COORDINATE_FUNCTION> +
+  <FACET_FUNCTION>
+```
+
+The stat argument can be used to specify algorithm used to calculate new values for a graph. Each geom object has a default stat, and each stat has a default geom. Geoms like `geom_point()` will leave data as is, known as `stat_identity()`. Graphs like bar charts and histograms will bin your data and compute bin counts, known as `stat_count()`. Can see full list of stats at [ggplot2 reference](https://ggplot2.tidyverse.org/reference/) under both Layer: geoms and Layer: stats.
+
+```{r}
+ggplot(data=mpg) +
+    geom_bar(mapping=aes(x=class))
+```
+
+Since each stat comes with a default geom, can use stat to create geoms on plots as well.
+
+```{r}
+ggplot(data=mpg) +
+    stat_count(mapping=aes(x=class))
+```
+
+Because stat_count() computes `count` and `prop`, can use those as variables for mapping as well
+
+```{r}
+ggplot(data=mpg) + geom_bar(mapping=aes(x=class, y=..prop..,group=1))
+```
+
+`Stat_summary` is associated with geom_point range, the default is to compute mean and standard error
+
+```{r}
+ggplot(data = mpg) + 
+  stat_summary(mapping = aes(x=class,y=hwy))
+```
+
+Can change stat_summary to compute median and min/max instead
+
+```{r}
+ggplot(data = mpg) +
+  stat_summary(
+    mapping = aes(x = class, y = hwy),
+    fun.ymin = min,
+    fun.ymax = max,
+    fun.y = median
+  )
+```
+
+## Position adjustments
+
+```{r}
+ggplot(data = <DATA>) + 
+  <GEOM_FUNCTION>(
+     mapping = aes(<MAPPINGS>),
+     stat = <STAT>, 
+     position = <POSITION>
+  ) +
+  <COORDINATE_FUNCTION> +
+  <FACET_FUNCTION>
+```
+
+Each geom also comes with a default **position adjustment** specified by `position` argument. For geoms like `geom_point()` it is "identity" which is position as is.
+
+Specifically for bar charts, have fill aesthetic. If fill aesthetic gets mapped to another variable, bars are automatically stacked under the "stack" position. Can see [list of positions](https://ggplot2.tidyverse.org/reference/#section-layer-position-adjustment) at ggplot2 reference.
+
+```{r}
+p1 <- ggplot(data = mpg, mapping=aes(x=class,fill=as.factor(cyl)))
+p1 + geom_bar()
+```
+
+`position = identity` will place each object exactly where it falls in context of graph, which isn't super useful for bar charts, better for scatterplots.
+
+```{r}
+p1 + geom_bar(position="identity", alpha=0.2)
+```
+
+`position = fill` will make bars same height
+
+```{r}
+p1 + geom_bar(position="fill")
+```
+
+`position = dodge` places objects directly beside one another, which can make it easier to compare individual values.
+
+```{r}
+p1 + geom_bar(position="dodge")
+```
+
+For `geom_point` one possible position is "jitter", which will add a small amount of random noise to each point. This spreads points out so that it's unlikely for points to overlap and therefore get plotted over each other. For example it's possible that majority of points are actually one combination of `hwy` and `displ` but they all get plotted at the exact same point so you can't tell. For very large datasets can help prevent overplotting to better see where mass of plot is or trends.
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) + 
+  geom_point()
+```
+
+This plot makes the data quite uniform -- maybe there's multiple observations with same value of cty/hwy creating overlapping points. Let's check:
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) + 
+  geom_point(position="jitter")
+```
+
+`position=jitter` has cleared up the overlapping points for us.
+
+## Coordinate systems
+
+```{r}
+ggplot(data = <DATA>) + 
+  <GEOM_FUNCTION>(
+     mapping = aes(<MAPPINGS>),
+     stat = <STAT>, 
+     position = <POSITION>
+  ) +
+  <COORDINATE_FUNCTION> +
+  <FACET_FUNCTION>
+```
+
+Default coordinate system is Cartesian.
+
+ * `coord_flip()` switches x and y axes.
+ * `coord_quickmap()` sets aspect ratio for maps.
+ * `coord_polar()` sets polar coordinates.
+
+```{r}
+p <- ggplot(data = mpg, mapping = aes(x = class, y = hwy))
+p + geom_boxplot()
+```
+
+Can use `coord_flip()` to flip the coordinates:
+
+```{r}
+p + geom_boxplot() + coord_flip()
+```
+
+Can also reorder x axis by lowest to highest median hwy mileage, which might allow easier comparisons
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = reorder(class,hwy,FUN=median), y = hwy)) + 
+  geom_boxplot() +
+  coord_flip()
+```
+
+You can also use `geom_polygon` to make some maps:
+
+```{r}
+nz <- map_data("nz")
+
+ggplot(nz, aes(long, lat, group = group)) +
+  geom_polygon(fill = "white", colour = "black")
+```
+
+Can also tweak the aspect ratios:
+
+```{r}
+ggplot(nz, aes(long, lat, group = group)) +
+  geom_polygon(fill = "white", colour = "black") +
+  coord_quickmap()
+```
+
+Can also use polar coordinates
+
+```{r}
+bar <- ggplot(data = mpg) + 
+  geom_bar(
+    mapping = aes(x = class, fill = as.factor(cyl)), 
+    show.legend = FALSE,
+    width = 1
+  ) + 
+  theme(aspect.ratio = 1) +
+  labs(x = NULL, y = NULL)
+
+p1 <- bar + coord_flip()
+p2 <- bar + coord_polar()
+grid.arrange(p1,p2, nrow=1)
+```
+
+# Publication Quality Graphs
+
+Last piece with some additional functions to learn...
+
+## Labels
+
+`labs()` to add most kinds of labels: title, subtitle, captions, x-axis, y-axis, legend, etc.
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Fuel efficiency generally\n decreases with engine size",
+    subtitle = "Two seaters (sports cars) are an exception because of their light weight",
+    caption = "Data from fueleconomy.gov",
+    x = "Engine displacement (L)",
+    y = "Highway fuel economy (mpg)",
+    color = "Car type"
+  )
+```
+
+## Annotations
+
+Can use `geom_text()` to add text labels on the plot.
+
+```{r}
+best_in_class <- mpg %>%
+  group_by(class) %>%
+  filter(row_number(desc(hwy)) == 1)
+
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class)) +
+  geom_text(aes(label = model), data = best_in_class)
+```
+
+Can also use `ggrepel` to add labels:
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class)) +
+  ggrepel::geom_label_repel(aes(label = model), data = best_in_class) +
+  labs(
+    caption = "Data from fueleconomy.gov",
+    x = "Engine displacement (L)",
+    y = "Highway fuel economy (mpg)",
+    colour = "Car type"
+  ) +
+  geom_point(size = 3, shape = 1, data = best_in_class)
+```
+
+## Scales
+
+ * `breaks`: For the position of ticks
+ * `labels`: For the text label associated with each tick.
+ * Default scale is x continuous, y continuous but can also do x logarithmic, y logarithmic, change color scales.
+
+Specify the y-scale breaks:
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() +
+  scale_y_continuous(breaks = seq(15, 40, by = 5))
+```
+
+Remove axis tick labels:
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() +
+  scale_x_continuous(labels = NULL) +
+  scale_y_continuous(labels = NULL)
+```
+
+Can also log-scale axes:
+
+```{r}
+p1 <- ggplot(diamonds, aes(carat, price)) +
+  geom_bin2d()
+ggplot(diamonds, aes(carat, price)) +
+  geom_bin2d() + 
+  scale_x_log10() + 
+  scale_y_log10()
+```
+
+Could get the same plot by specifying `log10(carat)` and `log10(price)` in the aesthetics mapping:
+
+```{r}
+ggplot(diamonds, aes(log10(carat), log10(price))) +
+  geom_bin2d()
+```
+
+Can also use different ggplot palettes to change the colors -- let's compare the default to the `Set1` palette:
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = drv))
+
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = drv)) +
+  scale_colour_brewer(palette = "Set1")
+```
+
+Use `?scale_colour_brewer()` to see a list of palettes.
+
+You can also manually specify which colors to use:
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = drv)) +
+  scale_colour_manual(values=c(`4`="red",f="blue",r="blue"))
+```
+
+## Legend positioning
+
+`theme(legend.position)` to control legend position. `guides()` with `guide_legened()` or `guide_colourbar()` for legend display.
+
+```{r}
+base <- ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class))
+
+p_left <- base + theme(legend.position = "left")
+p_top <- base + theme(legend.position = "top")
+p_bottom <- base + theme(legend.position = "bottom")
+p_right <- base + theme(legend.position = "right")
+```
+
+Let's use `grid.arrange` to look at our plots:
+
+```{r}
+grid.arrange(p_left, p_right, nrow = 2)
+```
+
+```{r}
+grid.arrange(p_top, p_bottom, nrow = 1)
+```
+
+Let's pull a few of these pieces together to start making our publication quality visualization:
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class)) +
+  geom_smooth(se = FALSE) +
+  theme(legend.position = "bottom") +
+  guides(colour = guide_legend(nrow = 1, override.aes = list(size = 4)))
+```
+
+## Zooming
+
+Three ways to control plot limits:
+ * Adjusting what data are plotted
+ * Setting limits in each scale
+ * Setting `xlim` and `ylim` in `coord_cartesian()`
+
+Can set `xlim` and `ylim` in `coord_cartesian`
+
+```{r}
+ggplot(mpg, mapping = aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth() +
+  coord_cartesian(xlim = c(5, 7), ylim = c(10, 30))
+```
+
+Can adjust what data are plotted, but note that `geom_smooth` will plot its regression over the subsetted data.
+
+```{r}
+filter(mpg, displ >= 5, displ <= 7, hwy >= 10, hwy <= 30) %>%
+  ggplot(aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth()
+```
+
+You can also have different scales along `hwy` and `displ` if you subet the data
+
+```{r}
+suv <- mpg %>% filter(class == "suv")
+compact <- mpg %>% filter(class == "compact")
+ggplot(suv, aes(displ, hwy, colour = drv)) +
+  geom_point()
+
+ggplot(compact, aes(displ, hwy, colour = drv)) +
+  geom_point()
+```
+
+Note that the first plot is showing 4 and r for `drv`, while the second is showing 4 and f for `drv`.
+
+Can set limits in each scale
+
+```{r}
+x_scale <- scale_x_continuous(limits = range(mpg$displ))
+y_scale <- scale_y_continuous(limits = range(mpg$hwy))
+col_scale <- scale_colour_discrete(limits = unique(mpg$drv))
+
+ggplot(suv, aes(displ, hwy, colour = drv)) +
+  geom_point() +
+  x_scale +
+  y_scale +
+  col_scale
+
+ggplot(compact, aes(displ, hwy, colour = drv)) +
+  geom_point() +
+  x_scale +
+  y_scale +
+  col_scale
+```
+
+## Themes
+
+**ggplot2** has 8 themes by default, can get more in other packages like **ggthemes**. Generally prefer `theme_classic()`.
+
+```{r}
+base <- ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth(se = FALSE)
+
+p1 <- base + theme_bw()
+p2 <- base + theme_light()
+p3 <- base + theme_classic()
+p4 <- base + theme_linedraw()
+p5 <- base + theme_dark()
+p6 <- base + theme_minimal()
+p7 <- base + theme_void()
+
+grid.arrange(base,p1,p2,p3,p4,p5,p6,p7,nrow=3)
+```
+
+## Saving your plots
+
+ * `ggsave()` will save most recent plot to disk (can also specify which plot to save if you save the plot as an object first).
+ * `tiff()` will save next plot to disk
+ * Other functions like `postscript()` for eps files, etc.
+ * All can take `width`, `height`, `fonts`, `pointsize`, `res` (resolution) arguments
+
+```{r}
+p1 <- ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth(se = FALSE) +
+  labs(x="Engine displacement (L)",y="Heighway fuel economy (mpg)",
+    title = "Fuel efficiency generally decreases with engine size",
+    caption = "Data from fueleconomy.gov",
+    subtitle = "Two seaters (sports cars) are an exception because of their light weight",
+    colour = "Car type"
+  ) + theme_classic()
+p1
+ggsave("my_plot.pdf")
+
+tiff("my_plot.tiff",width=7,height=5,units="in",pointsize=8,res=350)
+p1
+dev.off()
+```
+
+# Some other useful visualization packages
+
+We don't have time in this workshop to get in depth, but here are some more useful visualization packages that may be helpful for your research.
+
+## ggtree for phylogenetics
+
+Resources and associated packages:
+ * [Data Integration, Manipulation and Visualization of Phylogenetic Trees](https://yulab-smu.github.io/treedata-book/index.html)
+ * [treeio](https://bioconductor.org/packages/release/bioc/html/treeio.html)
+ * [tidytree](https://cran.r-project.org/web/packages/tidytree/index.html)
+ 
+## cowplot
+
+Meant to provide publication-ready theme for **gplot2** that requires minimum amount of fiddling with sizes of axis labels, plot backgrounds, etc. Auto-sets `theme_classic()` for all plots.
+
+## Gviz for plotting data along genomic coordinates
+
+Can be installed from [Bioconductor](https://bioconductor.org/packages/release/bioc/html/Gviz.html).
+
+## phyloseq for metagenomics
+
+Website is [very comprehensive](http://joey711.github.io/phyloseq/).
+
+# Summary
+
+Now that we've gone through tidying, transforming, and visualizing data let's review all of the different functions we've used and in some cases learned the inner workings of:
+
+## Tidying
+
+ * `gather()`
+ * `spread()`
+ * `separate()`
+ * `unite()`
+ * `%>%` propagates the output from a function as input to another. eg: x %>% f(y) becomes f(x,y), and x %>% f(y) %>% g(z) becomes g(f(x,y),z).
+ 
+## Transforming
+
+ * `filter()` to pick observations (rows) by their values
+ * `arrange()` to reorder rows, default is by ascending value
+ * `select()` to pick variables (columns) by their names
+ * `mutate()` to create new variables with functions of existing variables
+ * `summarise()` to collapes many values down to a single summary
+ * `group_by()` to set up functions to operate on groups rather than the whole data set
+ 
+## Visualizing
+
+ * `ggplot` - global data and mappings
+ * `geom_point` - geom for scatterplots
+ * `geom_smooth` - geom for regressions
+ * `geom_pointrange` - geom for vertical intervals defined by `x`, `y`, `ymin`, and `ymax`
+ * `geom_bar` - geom for barcharts
+ * `geom_boxplot` - geom for boxplots
+ * `geom_polygon` - geom for polygons
+ * `aes(color)` - color mapping
+ * `aes(shape)` - shape mapping
+ * `aes(size)` - size mapping
+ * `aes(alpha)` - transparency mapping
+ * `as.factor()` - transforming numerical values to categorical values with levels
+ * `facet_grid`
+ * `facet_wrap`
+ * `stat_count` - default stat for barcharts, bins by x and counts
+ * `stat_identity` - default stat for scatterplots, leaves data as is
+ * `stat_summary` - default stat for pointrange, by default computes mean and se of y by x
+ * `position="identity"`
+ * `position="stacked"`
+ * `position="fill"`
+ * `position="dodge"`
+ * `position="jitter"`
+ * `coord_flip`
+ * `coord_map`
+ * `coord_polar`
+
+```{r}
+sessionInfo()
+```
+
