@@ -349,18 +349,18 @@ mtcars %>%
    lm(mpg ~ disp, data = .)
 ```
 
-But this will not work with base R pipes:
+With base R pipes, use the named `_` placeholder instead:
 
 ```{r}
 mtcars |>
-   lm(mpg ~ disp, data = .)
+   lm(mpg ~ disp, data = _)
 ```
 
-You'd have to do something like this:
+You can also do something like this:
 
 ```{r}
 mtcars |> 
-   (function(x) lm(mpg ~ cyl, data = x))()
+   (function(x) lm(mpg ~ disp, data = x))()
 ```
 
 ## Joins
