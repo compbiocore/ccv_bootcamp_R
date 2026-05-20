@@ -395,9 +395,9 @@ Bind any number of data frames by row, making a longer result. This is similar t
 bind_rows(a=table_1999, b=table_2008)
 ```
 
-```{r}
+
 If there are different columns in the two tables, the resulting table will have some `NA` values:
-```
+
 
 ```{r}
 table_1999$is_1999 <- 'yes'
@@ -788,10 +788,8 @@ ggplot(data=mpg) + geom_point()
 
 ## `<GEOM_FUNCTION>`
 
-```
 ggplot(data=<DATA>) +
     <GEOM_FUNCTION>(mapping=aes(<MAPPINGS>)
-```
 
 **geom** is geometrical object that the plot uses to represent data. Bar charts use bar geoms, line charts use line geoms, scatterplots use point geoms, etc. Full list of geoms provided with **ggplot2** can be seen in [ggplot2 reference](https://ggplot2.tidyverse.org/reference/#section-layer-geoms). Also exist other geoms created by [other packages](http://www.ggplot2-exts.org/gallery/).
 
@@ -865,7 +863,6 @@ ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
 
     We have gone over the minimum required syntax for ggplot, but there are additonal options that can be specified to further customize your plots, such as <FACET_FUNCTION>:
 
-```{r}
 ggplot(data = <DATA>) + 
   <GEOM_FUNCTION>(
      mapping = aes(<MAPPINGS>),
@@ -874,7 +871,6 @@ ggplot(data = <DATA>) +
   ) +
   <COORDINATE_FUNCTION> +
   <FACET_FUNCTION>
-```
 
 ## Facets
 
@@ -965,7 +961,6 @@ ggplot(data = mpg) +
 
 ## Position adjustments
 
-```{r}
 ggplot(data = <DATA>) + 
   <GEOM_FUNCTION>(
      mapping = aes(<MAPPINGS>),
@@ -974,7 +969,6 @@ ggplot(data = <DATA>) +
   ) +
   <COORDINATE_FUNCTION> +
   <FACET_FUNCTION>
-```
 
 Each geom also comes with a default **position adjustment** specified by `position` argument. For geoms like `geom_point()` it is "identity" which is position as is.
 
@@ -1021,7 +1015,6 @@ ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) +
 
 ## Coordinate systems
 
-```{r}
 ggplot(data = <DATA>) + 
   <GEOM_FUNCTION>(
      mapping = aes(<MAPPINGS>),
@@ -1030,7 +1023,6 @@ ggplot(data = <DATA>) +
   ) +
   <COORDINATE_FUNCTION> +
   <FACET_FUNCTION>
-```
 
 Default coordinate system is Cartesian.
 
