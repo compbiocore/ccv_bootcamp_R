@@ -910,14 +910,15 @@ library('ggplot2')
 There are two steps to downloading a package from Bioconductor -- first, install BiocManager.
 
 ```{r}
-install.packages("BiocManager")
+#install.packages("BiocManager")
 ```
 
 Then, load `BiocManager` and use `BiocManager::install()` to install a package.
 
 ```{r}
 library('BiocManager')
-BiocManager::install("org.Hs.eg.db")
+#BiocManager::install("org.Hs.eg.db")
+library('org.Hs.eg.db')
 ```
 
 Use the `sessionInfo()` function to see more information about your loaded R packages and namespace:
