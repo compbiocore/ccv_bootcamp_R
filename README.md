@@ -6,7 +6,7 @@ Materials for the CCV Intro to R bootcamp.
 
 These workshop materials can be used from a Brown University Open OnDemand RStudio Session running with Singularity.
 
-1. Sign in to the Brown Open OnDemand portal.
+1. Sign in to the Brown Open OnDemand portal (ood.ccv.brown.edu).
 2. Open **Interactive Apps** and start an **RStudio Session**.
 3. Choose the **Singularity**-based RStudio option for the session.
 4. Use the preexisting workshop image at `/oscar/data/shared/workshops/ccv_bootcamp_r:20260528.sif` when selecting the container image for the session.
